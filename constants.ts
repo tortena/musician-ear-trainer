@@ -1,9 +1,9 @@
 // app/constants.ts
-import { SkillComponent } from "./types/SkillComponent"
-import { SkillMode } from "./types/SkillMode"
-import { SkillNode } from "./types/SkillNode"
-import { SkillType } from "./types/SkillType"
-import { Token } from "./types/Token"
+import { SkillComponent } from "./domain/skillModel/SkillComponent"
+import { SkillMode } from "./domain/skillModel/SkillMode"
+import { SkillNode } from "./domain/skillModel/SkillNode"
+import { SkillType } from "./domain/skillModel/SkillType"
+import { Token } from "./domain/skillModel/Token"
 
 /* ===================== NODE TYPES ===================== */
 export const NODE_TYPES = ["LISTENING", "THEORY"] as const

@@ -1,0 +1,62 @@
+import { SkillComponentId } from "@/constants"
+import { ComponentProgress } from "@/domain/progression/ComponentProgress"
+import { UserProgress } from "@/domain/progression/UserProgress"
+import { StorageKey, loadData, saveData } from "./storage"
+
+function createInitialComponentProgress(
+    skillComponentId: SkillComponentId
+): ComponentProgress {
+    const now = new Date().toISOString()
+    
+    
+    return {
+        skillComponentId: skillComponentId,
+        repetitions: 0,
+        interval: 0,
+        dueDate: now,
+        easeFactor: 2.5,
+        lastReviewed: now,
+        gainedXp: 0
+    }
+}
+
+export function createInitialUserProgress(): UserProgress {
+    const today = new Date().toISOString().slice(0,10)
+
+    return {
+        componentProgress: {},
+
+        progression: {
+            xp: 0,
+            level: 1
+        },
+
+        engagement: {
+            currentStreak: 0,
+            longestStreak: 0,
+            lastActiveDate: today
+        }
+    }
+}
+
+export async function loadUserProgress(): Promise<UserProgress> {
+  const stored = await loadData<UserProgress>(StorageKey.USER_PROGRESS);
+  return stored ?? createInitialUserProgress();
+}
+
+export async function saveUserProgress(progress: UserProgress): Promise<void> {
+  await saveData(StorageKey.USER_PROGRESS, progress);
+}
+
+
+export function getOrCreateComponentProgress(
+  progress: UserProgress,
+  skillComponentId: SkillComponentId
+): ComponentProgress {
+  if (!progress.componentProgress[skillComponentId]) {
+    progress.componentProgress[skillComponentId] =
+      createInitialComponentProgress(skillComponentId);
+  }
+
+  return progress.componentProgress[skillComponentId];
+}
