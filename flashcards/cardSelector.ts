@@ -1,8 +1,9 @@
 import { SkillComponentId } from "@/constants";
-import { Flashcard } from "@/domain/Flashcard";
 import { ComponentProgress } from "@/domain/progression/ComponentProgress";
 import { UserProgress } from "@/domain/progression/UserProgress";
+import { Flashcard } from "@/domain/session/Flashcard";
 import { getUnlockedSkillComponentIds } from "@/logic/progression";
+import { getOrCreateComponentProgress } from "@/storage/userProgress";
 
 function chooseNewComponentIdsFromList(userProgress: UserProgress, arr: SkillComponentId[], n: number): SkillComponentId[] {
     // May want a better function than just random. Including userProgress for a potential weighting algorithm
@@ -49,12 +50,18 @@ export function selectCardsForSession(userProgress: UserProgress, minNewFlashcar
     // Selection algorithm:
     // 1. Take as many reviewcards as possible (within given bounds)
     if (dueComponentIds.length < maxReviews) {
-        cardSession.push(...(dueComponentIds.map((p): Flashcard => ({skillComponentId: p, newFlashcard: false}))))
+        cardSession.push(...(dueComponentIds.map((p): Flashcard => ({
+            skillComponentId: p, 
+            newFlashcard: false,
+            componentProgress: getOrCreateComponentProgress(userProgress, p)}))))
     } else {
         cardSession.push(...chooseNewComponentIdsFromList(
             userProgress,
             dueComponentIds,
-            maxReviews).map((p): Flashcard => ({skillComponentId: p, newFlashcard: false})))
+            maxReviews).map((p): Flashcard => ({
+                skillComponentId: p, 
+                newFlashcard: false,
+                componentProgress: getOrCreateComponentProgress(userProgress, p)})))
     }
 
 
@@ -65,9 +72,15 @@ export function selectCardsForSession(userProgress: UserProgress, minNewFlashcar
         cardSession.push(...chooseNewComponentIdsFromList(
             userProgress,
             newUnlockedComponentIds,
-            possibleNewCards).map((p): Flashcard => ({skillComponentId: p, newFlashcard: true})))
+            possibleNewCards).map((p): Flashcard => ({
+                skillComponentId: p, 
+                newFlashcard: true,
+                componentProgress: getOrCreateComponentProgress(userProgress, p)})))
     } else {
-        cardSession.push(...(newUnlockedComponentIds.map((p): Flashcard => ({skillComponentId: p, newFlashcard: true}))))
+        cardSession.push(...(newUnlockedComponentIds.map((p): Flashcard => ({
+            skillComponentId: p, 
+            newFlashcard: true,
+            componentProgress: getOrCreateComponentProgress(userProgress, p)}))))
     }
 
     return cardSession
