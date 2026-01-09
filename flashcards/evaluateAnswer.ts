@@ -35,7 +35,7 @@ export function evaluateAnswer(answer: AnswerInput): AnswerResponse {
 
     return {
         correct: missing === 0 && extra === 0,
-        incorrectTokens: [...userSet].filter(t => !correctSet.has(t)),
+        correctAnswer: [...correctSet],
         quality: quality as QualityScore
     }
 

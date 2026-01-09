@@ -2,7 +2,7 @@ import { SkillComponentId } from "@/constants";
 import { ComponentProgress } from "./ComponentProgress";
 
 export type UserProgress = {
-  componentProgress: Partial<Record<SkillComponentId, ComponentProgress>>;
+  componentProgresses: Partial<Record<SkillComponentId, ComponentProgress>>;
 
   progression: {
     xp: number;

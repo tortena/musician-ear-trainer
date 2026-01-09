@@ -11,7 +11,8 @@ export type SessionState = {
 
     correctNum: number
     incorrectNum: number
-    streak:number
+    streak: number
+    longestStreak: number
 
     finished: boolean
 }

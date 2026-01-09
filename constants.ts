@@ -917,7 +917,7 @@ export const SKILL_MODES = {
   chords: {
     id: "chords",
     title: "Chord Recognition",
-    levelRequirement: 1,
+    levelRequirement: 5,
     skillType: "chords",
     stages: [
       { xpRequirement: 0, skillNodeIds: ["chord_triads", "chord_sus_power"] },
@@ -967,3 +967,12 @@ export const SKILL_TYPES = {
 } as const satisfies Record<string, SkillType>
 
 export type SkillTypeId = keyof typeof SKILL_TYPES
+
+export const LEVELS_FROM_XP = {
+  1: 0,
+  2: 100,
+  3: 300,
+  4: 600,
+  5: 1000,
+  6: 1500
+}

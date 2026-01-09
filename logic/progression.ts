@@ -1,4 +1,4 @@
-import { SKILL_MODES, SKILL_NODES, SkillComponentId, SkillNodeId } from "@/constants";
+import { LEVELS_FROM_XP, SKILL_MODES, SKILL_NODES, SkillComponentId, SkillNodeId } from "@/constants";
 import { UserProgress } from "@/domain/progression/UserProgress";
 
 function calculateNodeXpContribution(userProgress: UserProgress, skillNodeId: SkillNodeId): number {
@@ -34,4 +34,18 @@ export function getUnlockedSkillComponentIds(userProgress: UserProgress): SkillC
     }
 
     return unlockedSkillComponentIds
+}
+
+export function getLevelForXp(userXp: number) {
+    var maxLevel = 1
+    var maxXpRequirement = 0
+    for (const [level, xpRequirement] of Object.entries(LEVELS_FROM_XP)) {
+        if (userXp > xpRequirement && userXp >= maxXpRequirement ) {
+            maxLevel = Number(level)
+            maxXpRequirement = xpRequirement
+        }
+
+    }
+
+    return maxLevel
 }

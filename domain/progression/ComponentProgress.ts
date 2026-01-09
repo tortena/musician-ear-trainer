@@ -6,4 +6,5 @@ export type ComponentProgress = {
     sm2Values: SM2Values
     dueDate: string
     lastReviewed: string
+    componentXp: number
 }

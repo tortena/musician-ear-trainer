@@ -18,6 +18,7 @@ function createInitialComponentProgress(
         },
         dueDate: now,
         lastReviewed: now,
+        componentXp: 0
     }
 }
 
@@ -25,7 +26,7 @@ export function createInitialUserProgress(): UserProgress {
     const today = new Date().toISOString().slice(0,10)
 
     return {
-        componentProgress: {},
+        componentProgresses: {},
 
         progression: {
             xp: 0,
@@ -54,10 +55,10 @@ export function getOrCreateComponentProgress(
   progress: UserProgress,
   skillComponentId: SkillComponentId
 ): ComponentProgress {
-  if (!progress.componentProgress[skillComponentId]) {
-    progress.componentProgress[skillComponentId] =
+  if (!progress.componentProgresses[skillComponentId]) {
+    progress.componentProgresses[skillComponentId] =
       createInitialComponentProgress(skillComponentId);
   }
 
-  return progress.componentProgress[skillComponentId];
+  return progress.componentProgresses[skillComponentId];
 }

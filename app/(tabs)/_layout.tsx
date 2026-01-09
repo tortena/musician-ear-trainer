@@ -1,35 +1,68 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+// app/(tabs)/_layout.tsx
+import { Tabs } from "expo-router"
+import { Home, TreePine, PlayCircle, Settings } from "lucide-react-native"
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants_old/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+const PURPLE = "#8B5CF6"
+const BG = "#0E0B14"
+const MUTED = "#6B7280"
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          backgroundColor: BG,
+          borderTopColor: "#1F1B2E",
+          height: 64,
+        },
+        tabBarActiveTintColor: PURPLE,
+        tabBarInactiveTintColor: MUTED,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          marginBottom: 6,
+        },
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Home color={color} size={size} />
+          ),
         }}
       />
+
       <Tabs.Screen
-        name="explore"
+        name="skill-tree"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Skills",
+          tabBarIcon: ({ color, size }) => (
+            <TreePine color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="start"
+        options={{
+          title: "Start",
+          tabBarIcon: ({ color, size }) => (
+            <PlayCircle color={color} size={size} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Settings color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
-  );
+  )
 }

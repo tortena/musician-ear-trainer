@@ -34,7 +34,7 @@ export function selectCardsForSession(userProgress: UserProgress, sessionParams:
     const maxReviews = maxFlashcardNum - minNewFlashcards
     const minReviews = maxFlashcardNum - maxNewFlashcards
     
-    const componentProgressList = Object.values(userProgress.componentProgress).filter(
+    const componentProgressList = Object.values(userProgress.componentProgresses).filter(
         (p): p is ComponentProgress => p !== undefined)
     
     const now = Date.now()
@@ -44,7 +44,7 @@ export function selectCardsForSession(userProgress: UserProgress, sessionParams:
             (a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         ).map((p) => p.skillComponentId)
     
-    const learntIdSet = new Set(Object.keys(userProgress.componentProgress) as SkillComponentId[])
+    const learntIdSet = new Set(Object.keys(userProgress.componentProgresses) as SkillComponentId[])
 
     const newUnlockedComponentIds = getUnlockedSkillComponentIds(userProgress).filter((p) => !learntIdSet.has(p))
     

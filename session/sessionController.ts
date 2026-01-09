@@ -9,11 +9,15 @@ import { createSession } from "./createSession";
 import { getTokensForNodeFromComponent, getUnlockedTokensForModeFromComponent } from "@/utils/getTokens";
 import { loadData } from "@/storage/storage";
 import { loadUserProgress, saveUserProgress } from "@/storage/userProgress";
-import { SKILL_COMPONENTS, SKILL_NODES } from "@/constants";
+import { DisplayMode, SKILL_COMPONENTS, SKILL_NODES, TOKENS } from "@/constants";
 import { getNodeFromComponent } from "@/utils/hierarchy";
 import { TokenId } from "@/domain/skillModel/Token";
 import { UserProgress } from "@/domain/progression/UserProgress";
 import { SessionStats } from "@/domain/session/SessionStats";
+import { calculateXpForComponentProgress } from "./calculateXpForComponentProgress";
+import { SessionReview } from "@/domain/session/SessionReview";
+import { getLevelForXp } from "@/logic/progression";
+import { DisplayToken } from "@/domain/session/DisplayToken";
 
 export class SessionController {
 
@@ -28,9 +32,9 @@ export class SessionController {
         return new SessionController(sessionState)
     }
 
-    getCurrentCard(): Flashcard | null {
+    private getCurrentCard(): Flashcard {
         if (this.isFinished()) {
-            return null
+            throw new Error("Session is finished. Cannot get currentCard")
         }
         return this.sessionState.queue[this.sessionState.currentIndex]
     }
@@ -58,7 +62,9 @@ export class SessionController {
 
         if (answerResponse.correct) {
             this.sessionState.completedFlashcards[this.sessionState.currentIndex] = true    
-            this.sessionState.correctNum += 1    
+            this.sessionState.correctNum += 1
+            this.sessionState.streak += 1
+            this.sessionState.longestStreak = Math.max(this.sessionState.longestStreak, this.sessionState.streak)
         } else {
             this.sessionState.incorrectNum += 1
         }
@@ -93,20 +99,30 @@ export class SessionController {
         }
     }
 
-    async getTokenIdsToDisplay() {
+    private async getTokenIdsForCard(): Promise<TokenId[]> {
         let tokenIdsToDisplay: TokenId[]
 
         const currentCard = this.getCurrentCard()
         const userProgress = await loadUserProgress()
 
-        if (currentCard) {
-            const skillComponentId = currentCard.skillComponentId
-            if (currentCard.newFlashcard) {
-                const tokenIdsToDisplay = getTokensForNodeFromComponent(skillComponentId)
-            } else {
-                const tokenIdsToDisplay = getUnlockedTokensForModeFromComponent(userProgress, skillComponentId)
-            }
+        const skillComponentId = currentCard.skillComponentId
+        if (currentCard.newFlashcard) {
+            tokenIdsToDisplay = getTokensForNodeFromComponent(skillComponentId)
+        } else {
+            tokenIdsToDisplay = getUnlockedTokensForModeFromComponent(userProgress, skillComponentId)
         }
+
+        return tokenIdsToDisplay
+    }
+
+    async getDisplayTokens(): Promise<DisplayToken[]> {
+        const tokenIds = await this.getTokenIdsForCard()
+        const nodeDisplayMode: DisplayMode = SKILL_NODES[getNodeFromComponent(this.getCurrentCard().skillComponentId)].displayMode
+
+        return tokenIds.map((id) => ({
+            tokenId: id,
+            textToDisplayAsToken: TOKENS[id].displayMode[nodeDisplayMode]
+        }))
     }
 
     getStats(): SessionStats {
@@ -116,6 +132,50 @@ export class SessionController {
             streak: this.sessionState.streak
 
         }
+    }
+
+    async endSession(): Promise<SessionReview> {
+        var userProgress: UserProgress = await loadUserProgress()
+        var totalXpGained = 0
+
+        this.sessionState.queue.forEach(
+            (flashcard) => {
+                const componentProgress = userProgress.componentProgresses[flashcard.skillComponentId]
+
+                if (componentProgress) {
+                    const gainedXp = calculateXpForComponentProgress(
+                        componentProgress,
+                        this.getStats()
+                    )
+                    
+                    // Update Progress
+                    userProgress.progression.xp += gainedXp
+                    componentProgress.componentXp += gainedXp
+
+                    totalXpGained += gainedXp
+
+                } else {
+                    throw new Error("Cannot find ComponentProgress for: " + flashcard.skillComponentId)
+                }
+            }
+        )
+
+        const newLevel = getLevelForXp(userProgress.progression.xp)
+        const hasLeveledUp = userProgress.progression.level !== newLevel
+
+        userProgress.progression.level = newLevel
+
+        await saveUserProgress(userProgress)
+
+        return {
+            completedNum: this.sessionState.correctNum,
+            incorrectNum: this.sessionState.incorrectNum,
+            longestStreak: this.sessionState.longestStreak,
+            gainedXp: totalXpGained,
+            leveledUp: hasLeveledUp
+        }
+
+
     }
 
 }

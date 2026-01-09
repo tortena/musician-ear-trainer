@@ -19,6 +19,7 @@ export async function createSession(sessionParams: SessionParams): Promise<Sessi
         correctNum: 0,
         incorrectNum: 0,
         streak: 0,
+        longestStreak: 0,
 
         finished: false
 

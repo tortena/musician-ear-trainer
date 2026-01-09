@@ -3,6 +3,6 @@ import { QualityScore } from "./QualityScore"
 
 export type AnswerResponse = {
     correct: boolean,
-    incorrectTokens: TokenId[],
+    correctAnswer: TokenId[],
     quality: QualityScore
 }
