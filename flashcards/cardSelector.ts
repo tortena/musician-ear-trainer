@@ -2,6 +2,7 @@ import { SkillComponentId } from "@/constants";
 import { ComponentProgress } from "@/domain/progression/ComponentProgress";
 import { UserProgress } from "@/domain/progression/UserProgress";
 import { Flashcard } from "@/domain/session/Flashcard";
+import { SessionParams } from "@/domain/session/SessionParams";
 import { getUnlockedSkillComponentIds } from "@/logic/progression";
 import { getOrCreateComponentProgress } from "@/storage/userProgress";
 
@@ -23,10 +24,12 @@ function chooseNewComponentIdsFromList(userProgress: UserProgress, arr: SkillCom
 
 }
 
-export function selectCardsForSession(userProgress: UserProgress, minNewFlashcards: number, maxNewFlashcards: number, maxFlashcardNum: number) : Flashcard[] {
+export function selectCardsForSession(userProgress: UserProgress, sessionParams: SessionParams) : Flashcard[] {
     
     // Note that current function may not have a full session of cards, and no weighting is provided for new card selection
     // Review cards are chosen via dueTime
+
+    let {maxFlashcardNum, minNewFlashcards, maxNewFlashcards} = sessionParams
 
     const maxReviews = maxFlashcardNum - minNewFlashcards
     const minReviews = maxFlashcardNum - maxNewFlashcards
@@ -52,16 +55,14 @@ export function selectCardsForSession(userProgress: UserProgress, minNewFlashcar
     if (dueComponentIds.length < maxReviews) {
         cardSession.push(...(dueComponentIds.map((p): Flashcard => ({
             skillComponentId: p, 
-            newFlashcard: false,
-            componentProgress: getOrCreateComponentProgress(userProgress, p)}))))
+            newFlashcard: false}))))
     } else {
         cardSession.push(...chooseNewComponentIdsFromList(
             userProgress,
             dueComponentIds,
             maxReviews).map((p): Flashcard => ({
                 skillComponentId: p, 
-                newFlashcard: false,
-                componentProgress: getOrCreateComponentProgress(userProgress, p)})))
+                newFlashcard: false})))
     }
 
 
@@ -74,13 +75,11 @@ export function selectCardsForSession(userProgress: UserProgress, minNewFlashcar
             newUnlockedComponentIds,
             possibleNewCards).map((p): Flashcard => ({
                 skillComponentId: p, 
-                newFlashcard: true,
-                componentProgress: getOrCreateComponentProgress(userProgress, p)})))
+                newFlashcard: true})))
     } else {
         cardSession.push(...(newUnlockedComponentIds.map((p): Flashcard => ({
             skillComponentId: p, 
-            newFlashcard: true,
-            componentProgress: getOrCreateComponentProgress(userProgress, p)}))))
+            newFlashcard: true}))))
     }
 
     return cardSession

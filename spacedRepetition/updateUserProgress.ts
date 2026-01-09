@@ -1,20 +1,23 @@
 import { QualityScore } from "@/domain/answer/QualityScore";
-import { ComponentProgress } from "@/domain/progression/ComponentProgress";
 import { getSM2Values } from "./sm2";
+import { SkillComponentId } from "@/constants";
+import { getOrCreateComponentProgress, loadUserProgress, saveUserProgress } from "@/storage/userProgress";
+import { calculateDueDate, getDateNow } from "./calculateDates";
+import { UserProgress } from "@/domain/progression/UserProgress";
 
-export function updateComponentProgressFromQuality(
-    progress: ComponentProgress,
-    quality: QualityScore,
-    now: Date = new Date()
-): void {
+export function updateUserProgressFromAnswer(
+    userProgress: UserProgress,
+    skillComponentId: SkillComponentId,
+    quality: QualityScore
+) {
 
-    const newSM2Values = getSM2Values(progress.sm2Values, quality)
+    const componentProgress = getOrCreateComponentProgress(userProgress, skillComponentId)
+    
+    const newSM2Values = getSM2Values(componentProgress.sm2Values, quality)
 
-    const dueDate = new Date(now)
-    dueDate.setDate(dueDate.getDate() + newSM2Values.interval)
+    componentProgress.sm2Values = newSM2Values
 
-    progress.sm2Values = newSM2Values
-    progress.dueDate = dueDate.toISOString().slice(0,10)
-
+    componentProgress.dueDate = calculateDueDate(newSM2Values)
+    componentProgress.lastReviewed = getDateNow()
 
 }

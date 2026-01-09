@@ -1,16 +1,11 @@
-import { SkillComponentId } from "./SkillComponent"
-import { SkillModeId } from "./SkillMode"
-
-export type SkillNodeId = string
-
-export const NODE_TYPES = ['LISTENING', 'THEORY'] as const
-export type NodeType = typeof NODE_TYPES[number]
+import { NodeType, DisplayMode, SkillComponentId, SkillModeId } from "@/constants"
 
 export type SkillNode = {
-    id: SkillNodeId
+    id: string
     title: string
     description?: string
-    skillMode: SkillModeId
+    skillMode: string
     nodeType: NodeType
     skillComponentIds: SkillComponentId[]
+    displayMode: DisplayMode
 }

@@ -1,16 +1,15 @@
-import { SkillNodeId } from './SkillNode'
-import { SkillTypeId } from './SkillType'
+import { SkillNodeId } from '@/constants'
+import { SkillTypeId } from '@/constants'
 
-export type SkillModeId = string
-
-type Stage = {
+export type Stage = {
     xpRequirement: number
-    skillNodeId: SkillNodeId[]
+    skillNodeIds: SkillNodeId[]
 }
 
 export type SkillMode = {
-    id: SkillModeId
+    id: string
     title: string
     levelRequirement: number
     skillType: SkillTypeId
+    stages: Stage[]
 }

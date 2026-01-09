@@ -11,12 +11,13 @@ function createInitialComponentProgress(
     
     return {
         skillComponentId: skillComponentId,
-        repetitions: 0,
-        interval: 0,
+        sm2Values: {
+            repetitions: 0,
+            interval: 0,
+            easeFactor: 2.5
+        },
         dueDate: now,
-        easeFactor: 2.5,
         lastReviewed: now,
-        gainedXp: 0
     }
 }
 
