@@ -4,7 +4,6 @@ import { UserProgress } from "@/domain/progression/UserProgress";
 import { Flashcard } from "@/domain/session/Flashcard";
 import { SessionParams } from "@/domain/session/SessionParams";
 import { getUnlockedSkillComponentIds } from "@/logic/progression";
-import { getOrCreateComponentProgress } from "@/storage/userProgress";
 
 function chooseNewComponentIdsFromList(userProgress: UserProgress, arr: SkillComponentId[], n: number): SkillComponentId[] {
     // May want a better function than just random. Including userProgress for a potential weighting algorithm

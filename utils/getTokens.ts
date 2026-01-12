@@ -1,8 +1,7 @@
-import { SKILL_COMPONENTS, SKILL_NODES, SkillComponentId, SkillModeId, SkillNodeId } from "@/constants";
+import { SKILL_COMPONENTS, SKILL_NODES, SkillComponentId, SkillNodeId } from "@/constants";
 import { UserProgress } from "@/domain/progression/UserProgress";
 import { TokenId } from "@/domain/skillModel/Token";
 import { getModeFromComponent, getNodeFromComponent, getNodesFromMode } from "./hierarchy";
-import { loadUserProgress } from "@/storage/userProgress";
 
 export function getTokensForNode(skillNodeId: SkillNodeId): TokenId[] {
     var tokenSet: Set<TokenId> = new Set()

@@ -16,9 +16,16 @@ const { paramReview } = useGlobalSearchParams()
 
 
 
-export default function SessionReviewScreen({
-  review = paramReview ? JSON.parse(Array.isArray(paramReview) ? paramReview[0] : paramReview) : dummyReview,
-}: { review?: SessionReview }) {
+export default function SessionReviewScreen() {
+  
+  let review
+  try {
+    review = 
+      paramReview ? JSON.parse(Array.isArray(paramReview) ? paramReview[0] : paramReview) : dummyReview
+  } catch {
+    review = dummyReview
+  }
+
   const r = review
 
   return (

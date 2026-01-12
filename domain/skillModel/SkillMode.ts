@@ -1,5 +1,4 @@
-import { SkillNodeId } from '@/constants'
-import { SkillTypeId } from '@/constants'
+import { SkillNodeId, SkillTypeId } from '@/constants'
 
 export type Stage = {
     xpRequirement: number

@@ -8,7 +8,7 @@ import { SessionHeader } from "../../components/session/SessionHeader"
 import { BottomActionBar } from "../../components/session/BottomActionBar"
 import { SessionController } from "@/session/sessionController"
 
-import { playAudio } from "@/audio/audio"
+//import { playAudio } from "@/audio/audio"
 
 import { DisplayToken } from "@/domain/session/DisplayToken"
 import { TokenId } from "@/domain/skillModel/Token"
@@ -82,7 +82,7 @@ export default function SessionScreen() {
     <View style={styles.container}>
       <SessionHeader />
 
-      <Pressable onPress={() => playAudio("question")}>
+      <Pressable onPress={() => console.log('playAudio("question")')}>
         <Text style={styles.audio}>🎧 Play sound</Text>
       </Pressable>
 

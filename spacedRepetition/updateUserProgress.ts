@@ -1,9 +1,9 @@
-import { QualityScore } from "@/domain/answer/QualityScore";
-import { getSM2Values } from "./sm2";
 import { SkillComponentId } from "@/constants";
-import { getOrCreateComponentProgress, loadUserProgress, saveUserProgress } from "@/storage/userProgress";
-import { calculateDueDate, getDateNow } from "./calculateDates";
+import { QualityScore } from "@/domain/answer/QualityScore";
 import { UserProgress } from "@/domain/progression/UserProgress";
+import { getOrCreateComponentProgress } from "@/storage/userProgress";
+import { calculateDueDate, getDateNow } from "./calculateDates";
+import { getSM2Values } from "./sm2";
 
 export function updateUserProgressFromAnswer(
     userProgress: UserProgress,

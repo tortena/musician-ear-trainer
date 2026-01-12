@@ -1,23 +1,22 @@
+import { DisplayMode, SKILL_NODES, TOKENS } from "@/constants";
 import { AnswerInput } from "@/domain/answer/AnswerInput";
 import { AnswerResponse } from "@/domain/answer/AnswerResponse";
+import { UserProgress } from "@/domain/progression/UserProgress";
+import { DisplayToken } from "@/domain/session/DisplayToken";
 import { Flashcard } from "@/domain/session/Flashcard";
 import { SessionParams } from "@/domain/session/SessionParams";
-import { SessionState } from "@/domain/session/SessionState";
-import { evaluateAnswer } from "@/flashcards/evaluateAnswer";
-import { updateUserProgressFromAnswer } from "@/spacedRepetition/updateUserProgress";
-import { createSession } from "./createSession";
-import { getTokensForNodeFromComponent, getUnlockedTokensForModeFromComponent } from "@/utils/getTokens";
-import { loadData } from "@/storage/storage";
-import { loadUserProgress, saveUserProgress } from "@/storage/userProgress";
-import { DisplayMode, SKILL_COMPONENTS, SKILL_NODES, TOKENS } from "@/constants";
-import { getNodeFromComponent } from "@/utils/hierarchy";
-import { TokenId } from "@/domain/skillModel/Token";
-import { UserProgress } from "@/domain/progression/UserProgress";
-import { SessionStats } from "@/domain/session/SessionStats";
-import { calculateXpForComponentProgress } from "./calculateXpForComponentProgress";
 import { SessionReview } from "@/domain/session/SessionReview";
+import { SessionState } from "@/domain/session/SessionState";
+import { SessionStats } from "@/domain/session/SessionStats";
+import { TokenId } from "@/domain/skillModel/Token";
+import { evaluateAnswer } from "@/flashcards/evaluateAnswer";
 import { getLevelForXp } from "@/logic/progression";
-import { DisplayToken } from "@/domain/session/DisplayToken";
+import { updateUserProgressFromAnswer } from "@/spacedRepetition/updateUserProgress";
+import { loadUserProgress, saveUserProgress } from "@/storage/userProgress";
+import { getTokensForNodeFromComponent, getUnlockedTokensForModeFromComponent } from "@/utils/getTokens";
+import { getNodeFromComponent } from "@/utils/hierarchy";
+import { calculateXpForComponentProgress } from "./calculateXpForComponentProgress";
+import { createSession } from "./createSession";
 
 export class SessionController {
 

@@ -1,4 +1,4 @@
-import { NodeType, DisplayMode, SkillComponentId, SkillModeId } from "@/constants"
+import { DisplayMode, NodeType, SkillComponentId } from "@/constants"
 
 export type SkillNode = {
     id: string
