@@ -1,4 +1,5 @@
-// app/(tabs)/_layout.tsx
+console.log("JS is running")
+
 import { Tabs } from "expo-router"
 import { Home, TreePine, PlayCircle, Settings } from "lucide-react-native"
 

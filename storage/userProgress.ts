@@ -40,10 +40,15 @@ export function createInitialUserProgress(): UserProgress {
         }
     }
 }
-
+/*
 export async function loadUserProgress(): Promise<UserProgress> {
   const stored = await loadData<UserProgress>(StorageKey.USER_PROGRESS);
   return stored ?? createInitialUserProgress();
+}
+*/
+
+export async function loadUserProgress(): Promise<UserProgress> {
+  return createInitialUserProgress()
 }
 
 export async function saveUserProgress(progress: UserProgress): Promise<void> {

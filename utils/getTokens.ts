@@ -32,7 +32,7 @@ export function getUnlockedTokensForModeFromComponent(userProgress: UserProgress
         )
     )
 
-    for (const skillComponentId of Object.keys(userProgress.componentProgress) as SkillComponentId[]) {
+    for (const skillComponentId of Object.keys(userProgress.componentProgresses) as SkillComponentId[]) {
         SKILL_COMPONENTS[skillComponentId].tokenIds.forEach((userTokenId) => unlockedTokenSet.add(userTokenId))
     }
 

@@ -15,25 +15,53 @@ import { TokenId } from "@/domain/skillModel/Token"
 import { AnswerResponse } from "@/domain/answer/AnswerResponse"
 
 
-const sessionController = await SessionController.start({
-    minNewFlashcards: 4, 
-    maxNewFlashcards: 6, 
-    maxFlashcardNum: 15
-})
-
 export default function SessionScreen() {
   const [tokens, setTokens] = useState<DisplayToken[]>([])
   const [selected, setSelected] = useState<TokenId[]>([])
   const [correctAnswer, setCorrectAnswer] = useState<TokenId[] | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [undoCount, setUndoCount] = useState(0)
+  const [sessionController, setSessionController] =
+    useState<SessionController | null>(null)
 
-
+  // 1️⃣ Start session ONCE
   useEffect(() => {
-    loadQuestion()
+    let mounted = true
+
+    async function startSession() {
+      const controller = await SessionController.start({
+        minNewFlashcards: 4,
+        maxNewFlashcards: 6,
+        maxFlashcardNum: 15,
+      })
+
+      if (!mounted) return
+
+      setSessionController(controller)
+
+      const t = await controller.getDisplayTokens()
+      setTokens(t)
+    }
+
+    startSession()
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
+  // 2️⃣ Loading guard (ONLY ONE)
+  if (!sessionController) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: "white" }}>Starting session…</Text>
+      </View>
+    )
+  }
+
+  // 3️⃣ Helpers
   async function loadQuestion() {
+    if (!sessionController) return
     const t = await sessionController.getDisplayTokens()
     setTokens(t)
     setSelected([])
@@ -43,34 +71,31 @@ export default function SessionScreen() {
   }
 
   async function onCheck() {
+    if (!sessionController) return
     if (isAnswered) return
 
     const res = await sessionController.submitAnswer({
-        userTokenIds: selected,
-        correctTokenIds: [],
-        timeMs: 0,
-        undoCount,
+      userTokenIds: selected,
+      correctTokenIds: [],
+      timeMs: 0,
+      undoCount,
     })
 
     setIsAnswered(true)
     setCorrectAnswer(res.correctAnswer)
 
-    // Wait a bit to show feedback
     setTimeout(async () => {
-        if (sessionController.isFinished()) {
+      if (sessionController.isFinished()) {
         const review = await sessionController.endSession()
-        // Pass the review to the review screen
         router.replace({
-            pathname: "./session/review",
-            params: { review: JSON.stringify(review) }
+          pathname: "./review",
+          params: { review: JSON.stringify(review) },
         })
-
-        } else if (res.correct) {
+      } else if (res.correct) {
         loadQuestion()
-        }
+      }
     }, 900)
-    }
-
+  }
 
   function onUndo() {
     if (selected.length === 0 || isAnswered) return
@@ -78,6 +103,7 @@ export default function SessionScreen() {
     setUndoCount(c => c + 1)
   }
 
+  // 4️⃣ Render
   return (
     <View style={styles.container}>
       <SessionHeader />
@@ -89,11 +115,13 @@ export default function SessionScreen() {
       {/* Selected answer */}
       <View style={styles.answerRow}>
         {selected.map((id, i) => {
-          const label = tokens.find(t => t.tokenId === id)?.textToDisplayAsToken
+          const label =
+            tokens.find(t => t.tokenId === id)?.textToDisplayAsToken ?? id
+
           return (
             <TokenChip
               key={i}
-              label={label ?? id}
+              label={label}
               selected
               onPress={() =>
                 !isAnswered &&
@@ -104,7 +132,7 @@ export default function SessionScreen() {
         })}
       </View>
 
-      {/* Correct answer (shown after incorrect) */}
+      {/* Correct answer */}
       {isAnswered && correctAnswer && (
         <Animated.View entering={FadeIn} style={styles.correctRow}>
           <Text style={styles.correctLabel}>Correct answer:</Text>
@@ -142,6 +170,7 @@ export default function SessionScreen() {
     </View>
   )
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
