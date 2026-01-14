@@ -1,18 +1,17 @@
-import { View, Text, StyleSheet, Pressable } from "react-native"
-import { useEffect, useState } from "react"
 import { router } from "expo-router"
+import { useEffect, useState } from "react"
+import { Pressable, StyleSheet, Text, View } from "react-native"
 import Animated, { FadeIn } from "react-native-reanimated"
 
-import { TokenChip } from "../../components/session/TokenChip"
-import { SessionHeader } from "../../components/session/SessionHeader"
-import { BottomActionBar } from "../../components/session/BottomActionBar"
 import { SessionController } from "@/session/sessionController"
+import { BottomActionBar } from "../../components/session/BottomActionBar"
+import { SessionHeader } from "../../components/session/SessionHeader"
+import { TokenChip } from "../../components/session/TokenChip"
 
 //import { playAudio } from "@/audio/audio"
 
 import { DisplayToken } from "@/domain/session/DisplayToken"
 import { TokenId } from "@/domain/skillModel/Token"
-import { AnswerResponse } from "@/domain/answer/AnswerResponse"
 
 
 export default function SessionScreen() {
