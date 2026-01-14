@@ -10,6 +10,7 @@ import { TokenChip } from "../../components/session/TokenChip"
 
 //import { playAudio } from "@/audio/audio"
 
+import { playAudio } from "@/audio/audio"
 import { DisplayToken } from "@/domain/session/DisplayToken"
 import { TokenId } from "@/domain/skillModel/Token"
 
@@ -107,7 +108,7 @@ export default function SessionScreen() {
     <View style={styles.container}>
       <SessionHeader />
 
-      <Pressable onPress={() => console.log('playAudio("question")')}>
+      <Pressable onPress={() => playAudio(sessionController.getCurrentSampleFolder())}>
         <Text style={styles.audio}>🎧 Play sound</Text>
       </Pressable>
 

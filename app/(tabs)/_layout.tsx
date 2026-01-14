@@ -1,7 +1,5 @@
-console.log("JS is running")
-
 import { Tabs } from "expo-router"
-import { Home, TreePine, PlayCircle, Settings } from "lucide-react-native"
+import { Home, PlayCircle, Settings, TreePine } from "lucide-react-native"
 
 const PURPLE = "#8B5CF6"
 const BG = "#0E0B14"

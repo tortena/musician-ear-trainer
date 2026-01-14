@@ -42,7 +42,7 @@ export default function SessionReviewScreen() {
 
       <Pressable
         style={styles.button}
-        onPress={() => router.replace("../(tabs)/home")}
+        onPress={() => router.replace("/home")}
       >
         <Text style={styles.buttonText}>Back to Home</Text>
       </Pressable>

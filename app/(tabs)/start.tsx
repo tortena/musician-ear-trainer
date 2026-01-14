@@ -9,7 +9,7 @@ export default function StartScreen() {
 
       <Pressable
         style={styles.button}
-        onPress={() => router.push("./session")}
+        onPress={() => router.push("/session")}
       >
         <Text style={styles.buttonText}>Start Session</Text>
       </Pressable>
