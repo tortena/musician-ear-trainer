@@ -1,4 +1,4 @@
-/*
+
 // audioPlayer.ts
 import { Audio } from 'expo-av'
 import { Asset } from 'expo-asset'
@@ -17,9 +17,10 @@ const audioMap: Record<string, any> = {
   
 }
 
-/*
+/**
  * Play an audio file given a flashcard key
- * @param key //string representing the audio to play, e.g. 'intervals/ascending/C_M3'
+ * @param key string representing the audio to play, e.g. 'intervals/ascending/C_M3'
+ */
 
 let isPlaying = false
 

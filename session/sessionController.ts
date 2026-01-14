@@ -1,4 +1,4 @@
-import { DisplayMode, SKILL_NODES, TOKENS } from "@/constants";
+import { DisplayMode, SKILL_COMPONENTS, SKILL_NODES, TOKENS } from "@/constants";
 import { AnswerInput } from "@/domain/answer/AnswerInput";
 import { AnswerResponse } from "@/domain/answer/AnswerResponse";
 import { UserProgress } from "@/domain/progression/UserProgress";
@@ -131,6 +131,10 @@ export class SessionController {
             streak: this.sessionState.streak
 
         }
+    }
+
+    getCurrentSampleFolder() {
+        return SKILL_COMPONENTS[this.getCurrentCard().skillComponentId].sampleFolder
     }
 
     async endSession(): Promise<SessionReview> {

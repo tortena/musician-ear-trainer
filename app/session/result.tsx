@@ -12,11 +12,8 @@ const dummyReview: SessionReview = {
   leveledUp: true,
 }
 
-const { paramReview } = useGlobalSearchParams()
-
-
-
 export default function SessionReviewScreen() {
+  const { paramReview } = useGlobalSearchParams()
   
   let review
   try {

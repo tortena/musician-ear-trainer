@@ -1,14 +1,13 @@
-import { router } from "expo-router"
-import { useEffect, useState } from "react"
+import { useRouter } from "expo-router"
+import { useEffect, useRef, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import Animated, { FadeIn } from "react-native-reanimated"
+
 
 import { SessionController } from "@/session/sessionController"
 import { BottomActionBar } from "../../components/session/BottomActionBar"
 import { SessionHeader } from "../../components/session/SessionHeader"
 import { TokenChip } from "../../components/session/TokenChip"
-
-//import { playAudio } from "@/audio/audio"
 
 import { playAudio } from "@/audio/audio"
 import { DisplayToken } from "@/domain/session/DisplayToken"
@@ -21,12 +20,14 @@ export default function SessionScreen() {
   const [correctAnswer, setCorrectAnswer] = useState<TokenId[] | null>(null)
   const [isAnswered, setIsAnswered] = useState(false)
   const [undoCount, setUndoCount] = useState(0)
-  const [sessionController, setSessionController] =
-    useState<SessionController | null>(null)
+  const [sessionController, setSessionController] = useState<SessionController | null>(null)
+
+  const router = useRouter()
+  const mountedRef = useRef(true)
 
   // 1️⃣ Start session ONCE
   useEffect(() => {
-    let mounted = true
+    mountedRef.current = true
 
     async function startSession() {
       const controller = await SessionController.start({
@@ -35,34 +36,27 @@ export default function SessionScreen() {
         maxFlashcardNum: 15,
       })
 
-      if (!mounted) return
+      if (!mountedRef.current) return
 
       setSessionController(controller)
-
-      const t = await controller.getDisplayTokens()
-      setTokens(t)
+      await loadQuestion(controller)
     }
 
     startSession()
 
     return () => {
-      mounted = false
+      mountedRef.current = false
     }
   }, [])
 
-  // 2️⃣ Loading guard (ONLY ONE)
-  if (!sessionController) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: "white" }}>Starting session…</Text>
-      </View>
-    )
-  }
+  // 2️⃣ Load a question
+  async function loadQuestion(controller?: SessionController) {
+    const ctrl = controller ?? sessionController
+    if (!ctrl) return
 
-  // 3️⃣ Helpers
-  async function loadQuestion() {
-    if (!sessionController) return
-    const t = await sessionController.getDisplayTokens()
+    const t = await ctrl.getDisplayTokens()
+    if (!mountedRef.current) return
+
     setTokens(t)
     setSelected([])
     setCorrectAnswer(null)
@@ -70,9 +64,9 @@ export default function SessionScreen() {
     setUndoCount(0)
   }
 
+  // 3️⃣ Handle check answer
   async function onCheck() {
-    if (!sessionController) return
-    if (isAnswered) return
+    if (!sessionController || isAnswered) return
 
     const res = await sessionController.submitAnswer({
       userTokenIds: selected,
@@ -84,7 +78,10 @@ export default function SessionScreen() {
     setIsAnswered(true)
     setCorrectAnswer(res.correctAnswer)
 
+    // Wait 900ms, then move on
     setTimeout(async () => {
+      if (!mountedRef.current) return
+
       if (sessionController.isFinished()) {
         const review = await sessionController.endSession()
         router.replace({
@@ -92,40 +89,47 @@ export default function SessionScreen() {
           params: { review: JSON.stringify(review) },
         })
       } else if (res.correct) {
-        loadQuestion()
+        await loadQuestion()
       }
     }, 900)
   }
 
+  // 4️⃣ Undo last selection
   function onUndo() {
     if (selected.length === 0 || isAnswered) return
     setSelected(prev => prev.slice(0, -1))
     setUndoCount(c => c + 1)
   }
 
-  // 4️⃣ Render
+  // 5️⃣ Loading guard
+  if (!sessionController) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: "white" }}>Starting session…</Text>
+      </View>
+    )
+  }
+
+  // 6️⃣ Render
   return (
     <View style={styles.container}>
       <SessionHeader />
 
-      <Pressable onPress={() => playAudio(sessionController.getCurrentSampleFolder())}>
+      <Pressable onPress={() => playAudio("sessionController.getCurrentSampleFolder()")}>
         <Text style={styles.audio}>🎧 Play sound</Text>
       </Pressable>
 
       {/* Selected answer */}
       <View style={styles.answerRow}>
         {selected.map((id, i) => {
-          const label =
-            tokens.find(t => t.tokenId === id)?.textToDisplayAsToken ?? id
-
+          const label = tokens.find(t => t.tokenId === id)?.textToDisplayAsToken ?? id
           return (
             <TokenChip
               key={i}
               label={label}
               selected
               onPress={() =>
-                !isAnswered &&
-                setSelected(prev => prev.filter((_, idx) => idx !== i))
+                !isAnswered && setSelected(prev => prev.filter((_, idx) => idx !== i))
               }
             />
           )
@@ -138,8 +142,7 @@ export default function SessionScreen() {
           <Text style={styles.correctLabel}>Correct answer:</Text>
           <View style={styles.answerRow}>
             {correctAnswer.map((id, i) => {
-              const label =
-                tokens.find(t => t.tokenId === id)?.textToDisplayAsToken ?? id
+              const label = tokens.find(t => t.tokenId === id)?.textToDisplayAsToken ?? id
               return <TokenChip key={i} label={label} correct />
             })}
           </View>
@@ -153,10 +156,7 @@ export default function SessionScreen() {
             key={token.tokenId}
             label={token.textToDisplayAsToken}
             disabled={selected.includes(token.tokenId) || isAnswered}
-            onPress={() =>
-              !isAnswered &&
-              setSelected(prev => [...prev, token.tokenId])
-            }
+            onPress={() => !isAnswered && setSelected(prev => [...prev, token.tokenId])}
           />
         ))}
       </View>
@@ -170,6 +170,7 @@ export default function SessionScreen() {
     </View>
   )
 }
+
 
 const styles = StyleSheet.create({
   container: {
