@@ -66,6 +66,7 @@ export class SessionController {
             this.sessionState.longestStreak = Math.max(this.sessionState.longestStreak, this.sessionState.streak)
         } else {
             this.sessionState.incorrectNum += 1
+            this.sessionState.streak = 0
         }
 
         this.advanceSession()
@@ -133,8 +134,20 @@ export class SessionController {
         }
     }
 
+    getTotalQuestions(): number {
+        return this.sessionState.queue.length
+    }
+
+    getCurrentQuestionIndex(): number {
+        return this.sessionState.currentIndex
+    }
+
     getCurrentSampleFolder() {
         return SKILL_COMPONENTS[this.getCurrentCard().skillComponentId].sampleFolder
+    }
+
+    getCorrectTokenIds(): TokenId[] {
+        return SKILL_COMPONENTS[this.getCurrentCard().skillComponentId].tokenIds
     }
 
     async endSession(): Promise<SessionReview> {

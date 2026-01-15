@@ -49,3 +49,7 @@ export function getLevelForXp(userXp: number) {
 
     return maxLevel
 }
+
+export function getXpForLevel(level: number): number {
+    return LEVELS_FROM_XP[level] ?? 0
+}

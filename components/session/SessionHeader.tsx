@@ -1,11 +1,19 @@
-import { View, Text, StyleSheet } from "react-native"
+import { StyleSheet, Text, View } from "react-native"
 
-export function SessionHeader() {
+interface SessionHeaderProps {
+  streak: number
+  correctNum: number
+  incorrectNum: number
+  questionsLeft: number
+}
+
+export function SessionHeader({ streak, correctNum, incorrectNum, questionsLeft }: SessionHeaderProps) {
   return (
     <View style={styles.header}>
-      <Text style={styles.text}>🔥 3</Text>
-      <Text style={styles.text}>✔ 5</Text>
-      <Text style={styles.text}>✖ 1</Text>
+      <Text style={styles.text}>🔥 {streak}</Text>
+      <Text style={styles.text}>✔ {correctNum}</Text>
+      <Text style={styles.text}>✖ {incorrectNum}</Text>
+      <Text style={styles.text}>📋 {questionsLeft}</Text>
     </View>
   )
 }

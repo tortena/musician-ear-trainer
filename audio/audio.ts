@@ -1,69 +1,104 @@
 
-// audioPlayer.ts
 import { Audio } from 'expo-av'
-import { Asset } from 'expo-asset'
 
 let soundObject: Audio.Sound | null = null
+let isPlaying = false
+let playbackTimeout: ReturnType<typeof setTimeout> | null = null
 
-// Placeholder audio file for testing
 const placeholderAudio = require('../assets/audio/placeholder.mp3')
 
+const audioMap: Record<string, number> = {
+  'intervals/m2_up': placeholderAudio,
+  'intervals/m2_down': placeholderAudio,
+  'intervals/m2_harmonic': placeholderAudio,
+}
 
-const audioMap: Record<string, any> = {
-  'intervals/ascending/C_M3': placeholderAudio,
-  'intervals/descending/C_M3': placeholderAudio,
-  'intervals/harmonic/C_M3': placeholderAudio,
-  'chords/maj7/C': placeholderAudio,
-  
+/**
+ * Reset the playing flag and cleanup timeout
+ */
+function resetPlayingState() {
+  isPlaying = false
+  if (playbackTimeout) {
+    clearTimeout(playbackTimeout)
+    playbackTimeout = null
+  }
 }
 
 /**
  * Play an audio file given a flashcard key
- * @param key string representing the audio to play, e.g. 'intervals/ascending/C_M3'
  */
-
-let isPlaying = false
-
 export async function playAudio(key: string) {
   if (isPlaying) return
   isPlaying = true
 
+  // Timeout fallback: reset flag after 10 seconds max
+  playbackTimeout = setTimeout(() => {
+    resetPlayingState()
+  }, 10000)
+
   try {
-    // Unload previous sound
+    // Clean up previous sound
     if (soundObject) {
       await soundObject.unloadAsync()
       soundObject = null
     }
 
-    // Load the asset dynamically from the map
-    const assetModule = audioMap[key] ?? placeholderAudio
+    // Normalize key (optional but recommended)
+    const normalizedKey = key.replace(/^audio\//, '')
 
-    const { sound } = await Audio.Sound.createAsync(assetModule)
+    let asset = audioMap[normalizedKey]
+
+    if (!asset) {
+      console.warn(`Audio not found for "${key}", using placeholder`)
+      asset = placeholderAudio
+    }
+
+    const { sound } = await Audio.Sound.createAsync(
+      asset,
+      { shouldPlay: true }
+    )
+
     soundObject = sound
 
-    await sound.playAsync()
+    // Unlock when playback finishes
+    sound.setOnPlaybackStatusUpdate(status => {
+      if (!status.isLoaded) return
+      if (status.didJustFinish) {
+        resetPlayingState()
+      }
+    })
+
   } catch (error) {
-    console.error('Error playing audio:', error)
-  } finally {
-    isPlaying = false
+    console.error('Audio error, forcing placeholder:', error)
+
+    // 🔒 Absolute last-resort fallback
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        placeholderAudio,
+        { shouldPlay: true }
+      )
+      soundObject = sound
+
+      // Also set playback status for fallback
+      sound.setOnPlaybackStatusUpdate(status => {
+        if (!status.isLoaded) return
+        if (status.didJustFinish) {
+          resetPlayingState()
+        }
+      })
+
+    } catch (e) {
+      console.error('Placeholder ALSO failed 😬', e)
+      resetPlayingState()
+    }
   }
 }
 
-
-//Stop current audio playback
-
 export async function stopAudio() {
+  resetPlayingState()
   if (soundObject) {
     await soundObject.stopAsync()
     await soundObject.unloadAsync()
     soundObject = null
   }
 }
-
-/*
-// Play a flashcard audio
-await playAudio('intervals/ascending/C_M3')
-
-// Stop if user skips
-await stopAudio()
-*/

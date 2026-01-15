@@ -968,7 +968,7 @@ export const SKILL_TYPES = {
 
 export type SkillTypeId = keyof typeof SKILL_TYPES
 
-export const LEVELS_FROM_XP = {
+export const LEVELS_FROM_XP: Record<number, number> = {
   1: 0,
   2: 100,
   3: 300,
@@ -976,3 +976,4 @@ export const LEVELS_FROM_XP = {
   5: 1000,
   6: 1500
 }
+

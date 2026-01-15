@@ -1,8 +1,7 @@
 import { useRouter } from "expo-router"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import Animated, { FadeIn } from "react-native-reanimated"
-
 
 import { SessionController } from "@/session/sessionController"
 import { BottomActionBar } from "../../components/session/BottomActionBar"
@@ -21,13 +20,16 @@ export default function SessionScreen() {
   const [isAnswered, setIsAnswered] = useState(false)
   const [undoCount, setUndoCount] = useState(0)
   const [sessionController, setSessionController] = useState<SessionController | null>(null)
+  const [startTime, setStartTime] = useState<number>(0)
+  const [stats, setStats] = useState({ correctNum: 0, incorrectNum: 0, streak: 0 })
+  const [questionsLeft, setQuestionsLeft] = useState(0)
 
   const router = useRouter()
   const mountedRef = useRef(true)
 
   // 1️⃣ Start session ONCE
   useEffect(() => {
-    mountedRef.current = true
+    let mounted = true
 
     async function startSession() {
       const controller = await SessionController.start({
@@ -36,25 +38,35 @@ export default function SessionScreen() {
         maxFlashcardNum: 15,
       })
 
-      if (!mountedRef.current) return
+      if (!mounted) return
 
       setSessionController(controller)
-      await loadQuestion(controller)
+
+      const t = await controller.getDisplayTokens()
+      if (!mounted) return
+
+      setTokens(t)
+      setSelected([])
+      setCorrectAnswer(null)
+      setIsAnswered(false)
+      setUndoCount(0)
+      setStats(controller.getStats())
+      setQuestionsLeft(controller.getTotalQuestions() - controller.getCurrentQuestionIndex() - 1)
+      setStartTime(Date.now())
     }
 
     startSession()
 
     return () => {
-      mountedRef.current = false
+      mounted = false
     }
   }, [])
 
   // 2️⃣ Load a question
-  async function loadQuestion(controller?: SessionController) {
-    const ctrl = controller ?? sessionController
-    if (!ctrl) return
+  const loadQuestion = useCallback(async () => {
+    if (!sessionController) return
 
-    const t = await ctrl.getDisplayTokens()
+    const t = await sessionController.getDisplayTokens()
     if (!mountedRef.current) return
 
     setTokens(t)
@@ -62,34 +74,49 @@ export default function SessionScreen() {
     setCorrectAnswer(null)
     setIsAnswered(false)
     setUndoCount(0)
-  }
+    setStartTime(Date.now())
+    setStats(sessionController.getStats())
+    setQuestionsLeft(sessionController.getTotalQuestions() - sessionController.getCurrentQuestionIndex() - 1)
+  }, [sessionController])
 
   // 3️⃣ Handle check answer
   async function onCheck() {
     if (!sessionController || isAnswered) return
 
+    const correctTokenIds = sessionController.getCorrectTokenIds()
+    const timeMs = Date.now() - startTime
+
     const res = await sessionController.submitAnswer({
       userTokenIds: selected,
-      correctTokenIds: [],
-      timeMs: 0,
+      correctTokenIds,
+      timeMs,
       undoCount,
     })
 
     setIsAnswered(true)
     setCorrectAnswer(res.correctAnswer)
+    setStats(sessionController.getStats()) // Update stats after answer
+
+    // Capture controller reference to avoid stale closure
+    const controller = sessionController
+    const isFinished = controller.isFinished()
 
     // Wait 900ms, then move on
     setTimeout(async () => {
       if (!mountedRef.current) return
 
-      if (sessionController.isFinished()) {
-        const review = await sessionController.endSession()
-        router.replace({
-          pathname: "./review",
-          params: { review: JSON.stringify(review) },
-        })
-      } else if (res.correct) {
-        await loadQuestion()
+      try {
+        if (isFinished) {
+          const review = await controller.endSession()
+          router.replace({
+            pathname: "./result",
+            params: { review: JSON.stringify(review) },
+          })
+        } else {
+          await loadQuestion()
+        }
+      } catch (error) {
+        console.error('Error finishing session:', error)
       }
     }, 900)
   }
@@ -113,9 +140,14 @@ export default function SessionScreen() {
   // 6️⃣ Render
   return (
     <View style={styles.container}>
-      <SessionHeader />
+      <SessionHeader 
+        streak={stats.streak}
+        correctNum={stats.correctNum}
+        incorrectNum={stats.incorrectNum}
+        questionsLeft={questionsLeft}
+      />
 
-      <Pressable onPress={() => playAudio("sessionController.getCurrentSampleFolder()")}>
+      <Pressable onPress={() => playAudio(sessionController.getCurrentSampleFolder())}>
         <Text style={styles.audio}>🎧 Play sound</Text>
       </Pressable>
 
