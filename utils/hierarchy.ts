@@ -1,4 +1,4 @@
-import { SKILL_MODES, SKILL_NODES, SkillComponentId, SkillModeId, SkillNodeId } from "@/constants";
+import { SKILL_MODES, SKILL_NODES, SkillComponentId, SkillModeId, SkillNodeId, SkillTypeId } from "@/constants";
 
 export function getNodeFromComponent(skillComponentId: SkillComponentId): SkillNodeId {
     for (const [skillNodeId, node] of Object.entries(SKILL_NODES)) {
@@ -25,4 +25,8 @@ export function getNodesFromMode(skillModeId:SkillModeId): SkillNodeId[] {
     })
 
     return [...nodeIdSet]
+}
+
+export function getSkillTypeFromComponent(skillComponentId: SkillComponentId): SkillTypeId {
+    return SKILL_MODES[getModeFromComponent(skillComponentId)].skillType
 }

@@ -1,10 +1,11 @@
 // app/(tabs)/home.tsx
-import { useEffect, useState } from "react"
-import { StyleSheet, Text, View } from "react-native"
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-import { UserProgress } from "@/domain/progression/UserProgress"
+import { UserProgress } from "@/domain/progression/UserProgress";
 import { getXpForLevel } from "@/logic/progression"; // imaginary import
-import { loadUserProgress } from "@/storage/userProgress"
+import { loadUserProgress } from "@/storage/userProgress";
+import { isSameDay } from "@/utils/dates";
 
 export default function HomeScreen() {
   const [progress, setProgress] = useState<UserProgress | null>(null)
@@ -89,16 +90,6 @@ export default function HomeScreen() {
         </Text>
       </View>
     </View>
-  )
-}
-
-/* ---------- Helpers ---------- */
-
-function isSameDay(a: Date, b: Date) {
-  return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
   )
 }
 

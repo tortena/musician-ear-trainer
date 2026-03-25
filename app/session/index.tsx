@@ -8,9 +8,10 @@ import { BottomActionBar } from "../../components/session/BottomActionBar"
 import { SessionHeader } from "../../components/session/SessionHeader"
 import { TokenChip } from "../../components/session/TokenChip"
 
-import { playAudio } from "@/audio/audio"
+import { playSkillComponentAudio } from "@/audio/audio"
 import { DisplayToken } from "@/domain/session/DisplayToken"
 import { TokenId } from "@/domain/skillModel/Token"
+import { resetAllStorage } from "@/storage/resetStorage"
 
 
 export default function SessionScreen() {
@@ -29,6 +30,7 @@ export default function SessionScreen() {
 
   // 1️⃣ Start session ONCE
   useEffect(() => {
+    //resetAllStorage()
     let mounted = true
 
     async function startSession() {
@@ -81,44 +83,48 @@ export default function SessionScreen() {
 
   // 3️⃣ Handle check answer
   async function onCheck() {
-    if (!sessionController || isAnswered) return
+    if (!sessionController || isAnswered || sessionController.isFinished()) return
 
-    const correctTokenIds = sessionController.getCorrectTokenIds()
-    const timeMs = Date.now() - startTime
+    try {
+      const correctTokenIds = sessionController.getCorrectTokenIds()
+      const timeMs = Date.now() - startTime
 
-    const res = await sessionController.submitAnswer({
-      userTokenIds: selected,
-      correctTokenIds,
-      timeMs,
-      undoCount,
-    })
+      const res = await sessionController.submitAnswer({
+        userTokenIds: selected,
+        correctTokenIds,
+        timeMs,
+        undoCount,
+      })
 
-    setIsAnswered(true)
-    setCorrectAnswer(res.correctAnswer)
-    setStats(sessionController.getStats()) // Update stats after answer
+      setIsAnswered(true)
+      setCorrectAnswer(res.correctAnswer)
+      setStats(sessionController.getStats()) // Update stats after answer
 
-    // Capture controller reference to avoid stale closure
-    const controller = sessionController
-    const isFinished = controller.isFinished()
+      // Capture controller reference to avoid stale closure
+      const controller = sessionController
+      const isFinished = controller.isFinished()
 
-    // Wait 900ms, then move on
-    setTimeout(async () => {
-      if (!mountedRef.current) return
+      // Wait 900ms, then move on
+      setTimeout(async () => {
+        if (!mountedRef.current) return
 
-      try {
-        if (isFinished) {
-          const review = await controller.endSession()
-          router.replace({
-            pathname: "./result",
-            params: { review: JSON.stringify(review) },
-          })
-        } else {
-          await loadQuestion()
+        try {
+          if (isFinished) {
+            const review = await controller.endSession()
+            router.replace({
+              pathname: "/session/result",
+              params: { review: JSON.stringify(review) },
+            })
+          } else {
+            await loadQuestion()
+          }
+        } catch (error) {
+          console.error('Error finishing session:', error)
         }
-      } catch (error) {
-        console.error('Error finishing session:', error)
-      }
-    }, 900)
+      }, 900)
+    } catch (error) {
+      console.error('Error submitting answer:', error)
+    }
   }
 
   // 4️⃣ Undo last selection
@@ -147,7 +153,10 @@ export default function SessionScreen() {
         questionsLeft={questionsLeft}
       />
 
-      <Pressable onPress={() => playAudio(sessionController.getCurrentSampleFolder())}>
+      <Pressable onPress={() => playSkillComponentAudio(
+          sessionController.getCurrentSkillComponentId(), 
+          sessionController.shouldRootBeRandomised())
+          }>
         <Text style={styles.audio}>🎧 Play sound</Text>
       </Pressable>
 

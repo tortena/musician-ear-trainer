@@ -1,4 +1,4 @@
-import { DisplayMode, SKILL_COMPONENTS, SKILL_NODES, TOKENS } from "@/constants";
+import { DisplayMode, SKILL_COMPONENTS, SKILL_NODES, SkillComponentId, TOKENS } from "@/constants";
 import { AnswerInput } from "@/domain/answer/AnswerInput";
 import { AnswerResponse } from "@/domain/answer/AnswerResponse";
 import { UserProgress } from "@/domain/progression/UserProgress";
@@ -13,6 +13,7 @@ import { evaluateAnswer } from "@/flashcards/evaluateAnswer";
 import { getLevelForXp } from "@/logic/progression";
 import { updateUserProgressFromAnswer } from "@/spacedRepetition/updateUserProgress";
 import { loadUserProgress, saveUserProgress } from "@/storage/userProgress";
+import { isSameDay } from "@/utils/dates";
 import { getTokensForNodeFromComponent, getUnlockedTokensForModeFromComponent } from "@/utils/getTokens";
 import { getNodeFromComponent } from "@/utils/hierarchy";
 import { calculateXpForComponentProgress } from "./calculateXpForComponentProgress";
@@ -35,7 +36,11 @@ export class SessionController {
         if (this.isFinished()) {
             throw new Error("Session is finished. Cannot get currentCard")
         }
-        return this.sessionState.queue[this.sessionState.currentIndex]
+        const card = this.sessionState.queue[this.sessionState.currentIndex]
+        if (!card) {
+            throw new Error(`No card found at index ${this.sessionState.currentIndex}. Queue length: ${this.sessionState.queue.length}`)
+        }
+        return card
     }
 
     isFinished(): boolean {
@@ -142,12 +147,22 @@ export class SessionController {
         return this.sessionState.currentIndex
     }
 
-    getCurrentSampleFolder() {
-        return SKILL_COMPONENTS[this.getCurrentCard().skillComponentId].sampleFolder
+    getCorrectTokenIds(): TokenId[] {
+        const card = this.getCurrentCard()
+        const component = SKILL_COMPONENTS[card.skillComponentId]
+        if (!component) {
+            throw new Error(`Skill component not found: ${card.skillComponentId}`)
+        }
+        return component.tokenIds
     }
 
-    getCorrectTokenIds(): TokenId[] {
-        return SKILL_COMPONENTS[this.getCurrentCard().skillComponentId].tokenIds
+    getCurrentSkillComponentId(): SkillComponentId {
+        return this.getCurrentCard().skillComponentId
+    }
+
+    shouldRootBeRandomised(): boolean {
+        // Could make this better
+        return this.getCurrentCard().newFlashcard
     }
 
     async endSession(): Promise<SessionReview> {
@@ -175,6 +190,22 @@ export class SessionController {
                 }
             }
         )
+
+        const alreadyCompletedToday = isSameDay(
+            new Date(userProgress.engagement.lastActiveDate),
+            new Date()
+        )
+
+        if (!alreadyCompletedToday) {
+            userProgress.engagement.currentStreak += 1
+            userProgress.engagement.longestStreak = 
+                Math.max(
+                    userProgress.engagement.currentStreak,
+                    userProgress.engagement.longestStreak
+                )
+        }
+
+        userProgress.engagement.lastActiveDate = new Date().toISOString().slice(0,10)
 
         const newLevel = getLevelForXp(userProgress.progression.xp)
         const hasLeveledUp = userProgress.progression.level !== newLevel

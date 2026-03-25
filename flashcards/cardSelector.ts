@@ -1,9 +1,13 @@
-import { SkillComponentId } from "@/constants";
+import { SKILL_COMPONENTS, SkillComponentId } from "@/constants";
 import { ComponentProgress } from "@/domain/progression/ComponentProgress";
 import { UserProgress } from "@/domain/progression/UserProgress";
 import { Flashcard } from "@/domain/session/Flashcard";
 import { SessionParams } from "@/domain/session/SessionParams";
 import { getUnlockedSkillComponentIds } from "@/logic/progression";
+
+function isValidSkillComponentId(id: string): id is SkillComponentId {
+  return id in SKILL_COMPONENTS
+}
 
 function chooseNewComponentIdsFromList(userProgress: UserProgress, arr: SkillComponentId[], n: number): SkillComponentId[] {
     // May want a better function than just random. Including userProgress for a potential weighting algorithm
@@ -43,7 +47,10 @@ export function selectCardsForSession(userProgress: UserProgress, sessionParams:
             (a,b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
         ).map((p) => p.skillComponentId)
     
-    const learntIdSet = new Set(Object.keys(userProgress.componentProgresses) as SkillComponentId[])
+    // Filter out any invalid skillComponentIds that may have been stored
+    const learntIdSet = new Set(
+      Object.keys(userProgress.componentProgresses).filter(isValidSkillComponentId)
+    )
 
     const newUnlockedComponentIds = getUnlockedSkillComponentIds(userProgress).filter((p) => !learntIdSet.has(p))
     

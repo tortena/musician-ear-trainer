@@ -1,5 +1,5 @@
-import { View, Text, Pressable, StyleSheet } from "react-native"
 import { router, useGlobalSearchParams } from "expo-router"
+import { Pressable, StyleSheet, Text, View } from "react-native"
 
 import { SessionReview } from "@/domain/session/SessionReview"
 
@@ -13,17 +13,17 @@ const dummyReview: SessionReview = {
 }
 
 export default function SessionReviewScreen() {
-  const { paramReview } = useGlobalSearchParams()
+  const { review } = useGlobalSearchParams()
   
-  let review
+  let reviewData
   try {
-    review = 
-      paramReview ? JSON.parse(Array.isArray(paramReview) ? paramReview[0] : paramReview) : dummyReview
+    reviewData = 
+      review ? JSON.parse(Array.isArray(review) ? review[0] : review) : dummyReview
   } catch {
-    review = dummyReview
+    reviewData = dummyReview
   }
 
-  const r = review
+  const r = reviewData
 
   return (
     <View style={styles.container}>
