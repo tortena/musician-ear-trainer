@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
+    "runtimeVersion": "1.0.0",
     "scheme": "musicianeartrainer",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
@@ -35,7 +36,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
