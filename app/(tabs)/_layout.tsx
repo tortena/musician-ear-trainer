@@ -1,26 +1,29 @@
 import { Tabs } from "expo-router"
 import { Home, PlayCircle, Settings, TreePine } from "lucide-react-native"
-
-const PURPLE = "#8B5CF6"
-const BG = "#0E0B14"
-const MUTED = "#6B7280"
+import { useAppTheme } from "@/theme/ThemeProvider"
 
 export default function TabLayout() {
+  const { theme } = useAppTheme()
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: BG,
-          borderTopColor: "#1F1B2E",
-          height: 64,
+          backgroundColor: theme.background,
+          borderTopColor: theme.cardBorder,
+          borderTopWidth: 1,
+          height: 74,
+          paddingTop: 8,
         },
-        tabBarActiveTintColor: PURPLE,
-        tabBarInactiveTintColor: MUTED,
+        tabBarActiveTintColor: theme.accent,
+        tabBarInactiveTintColor: theme.tabInactive,
         tabBarLabelStyle: {
           fontSize: 11,
+          fontWeight: "700",
           marginBottom: 6,
         },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen

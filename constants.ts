@@ -4,6 +4,7 @@ import { SkillMode } from "./domain/skillModel/SkillMode"
 import { SkillNode } from "./domain/skillModel/SkillNode"
 import { SkillType } from "./domain/skillModel/SkillType"
 import { Token } from "./domain/skillModel/Token"
+import { buildTheoryComponents, buildTheoryNodes, THEORY_STAGE_NODE_IDS } from "./curriculum/theory"
 
 /* ===================== NODE TYPES ===================== */
 export const NODE_TYPES = ["LISTENING", "THEORY"] as const
@@ -31,6 +32,7 @@ export const TOKENS : Record<string,Token> = {
   // Chord-only qualities
   dominant: { id: "dominant", displayMode: { DEFAULT: "Dominant", SHORT: "7" } },
   suspended: { id: "suspended", displayMode: { DEFAULT: "Suspended", SHORT: "sus" } },
+  power: { id: "power", displayMode: { DEFAULT: "Power", SHORT: "5" } },
 
   // Degrees
   second: { id: "second", displayMode: { DEFAULT: "2nd", SHORT: "2" } },
@@ -76,7 +78,7 @@ export const TOKENS : Record<string,Token> = {
 
 /* ===================== SKILL COMPONENTS ===================== */
 
-export const SKILL_COMPONENTS = {
+const BASE_SKILL_COMPONENTS = {
   /* ---------- INTERVALS ---------- */
 
   // 2nds
@@ -256,11 +258,16 @@ export const SKILL_COMPONENTS = {
   note_B: { id: "note_B", tokenIds: ["B"] },
 } as const satisfies Record<string, SkillComponent>
 
+const THEORY_SKILL_COMPONENTS = buildTheoryComponents(BASE_SKILL_COMPONENTS)
 
-export type SkillComponentId = keyof typeof SKILL_COMPONENTS
+export const SKILL_COMPONENTS: Record<string, SkillComponent> = {
+  ...BASE_SKILL_COMPONENTS,
+  ...THEORY_SKILL_COMPONENTS,
+}
 
+export type SkillComponentId = string
 
-export const SKILL_NODES = {
+const BASE_SKILL_NODES = {
   //----------- ASCENDING INTERVALS ------------
   asc_2nds: {
     id: "asc_2nds",
@@ -631,55 +638,62 @@ export const SKILL_NODES = {
   },
 } as const satisfies Record<string, SkillNode>;
 
-export type SkillNodeId = keyof typeof SKILL_NODES
+const THEORY_SKILL_NODES = buildTheoryNodes()
+
+export const SKILL_NODES: Record<string, SkillNode> = {
+  ...BASE_SKILL_NODES,
+  ...THEORY_SKILL_NODES,
+}
+
+export type SkillNodeId = string
 
 
 export const SKILL_MODES = {
   ascending_intervals: {
     id: "ascending_intervals",
     title: "Ascending Intervals",
-    levelRequirement: 1,
+    levelRequirement: 2,
     skillType: "intervals",
     stages: [
-      { xpRequirement: 0, skillNodeIds: ["asc_2nds", "asc_3rds"] },
-      { xpRequirement: 15, skillNodeIds: ["asc_4ths", "asc_5ths"] },
-      { xpRequirement: 30, skillNodeIds: ["asc_octave"] },
-      { xpRequirement: 45, skillNodeIds: ["asc_6ths", "asc_7ths"] },
-      { xpRequirement: 65, skillNodeIds: ["asc_9ths"] },
-      { xpRequirement: 80, skillNodeIds: ["asc_10_11"] },
-      { xpRequirement: 100, skillNodeIds: ["asc_12_13"] },
+      { globalXpRequirement: 80, previousStageXpRequirement: 0, skillNodeIds: ["asc_2nds", "asc_3rds", ...THEORY_STAGE_NODE_IDS.ascending_intervals[0]] },
+      { globalXpRequirement: 160, previousStageXpRequirement: 80, skillNodeIds: ["asc_4ths", "asc_5ths", ...THEORY_STAGE_NODE_IDS.ascending_intervals[1]] },
+      { globalXpRequirement: 260, previousStageXpRequirement: 70, skillNodeIds: ["asc_octave"] },
+      { globalXpRequirement: 360, previousStageXpRequirement: 90, skillNodeIds: ["asc_6ths", "asc_7ths"] },
+      { globalXpRequirement: 500, previousStageXpRequirement: 80, skillNodeIds: ["asc_9ths"] },
+      { globalXpRequirement: 650, previousStageXpRequirement: 80, skillNodeIds: ["asc_10_11"] },
+      { globalXpRequirement: 820, previousStageXpRequirement: 90, skillNodeIds: ["asc_12_13"] },
     ],
   },
 
   descending_intervals: {
     id: "descending_intervals",
     title: "Descending Intervals",
-    levelRequirement: 1,
+    levelRequirement: 3,
     skillType: "intervals",
     stages: [
-      { xpRequirement: 0, skillNodeIds: ["desc_2nds", "desc_3rds"] },
-      { xpRequirement: 15, skillNodeIds: ["desc_4ths", "desc_5ths"] },
-      { xpRequirement: 30, skillNodeIds: ["desc_octave"] },
-      { xpRequirement: 45, skillNodeIds: ["desc_6ths", "desc_7ths"] },
-      { xpRequirement: 65, skillNodeIds: ["desc_9ths"] },
-      { xpRequirement: 80, skillNodeIds: ["desc_10_11"] },
-      { xpRequirement: 100, skillNodeIds: ["desc_12_13"] },
+      { globalXpRequirement: 220, previousStageXpRequirement: 0, skillNodeIds: ["desc_2nds", "desc_3rds", ...THEORY_STAGE_NODE_IDS.descending_intervals[0]] },
+      { globalXpRequirement: 320, previousStageXpRequirement: 80, skillNodeIds: ["desc_4ths", "desc_5ths", ...THEORY_STAGE_NODE_IDS.descending_intervals[1]] },
+      { globalXpRequirement: 430, previousStageXpRequirement: 70, skillNodeIds: ["desc_octave"] },
+      { globalXpRequirement: 560, previousStageXpRequirement: 90, skillNodeIds: ["desc_6ths", "desc_7ths"] },
+      { globalXpRequirement: 710, previousStageXpRequirement: 80, skillNodeIds: ["desc_9ths"] },
+      { globalXpRequirement: 880, previousStageXpRequirement: 80, skillNodeIds: ["desc_10_11"] },
+      { globalXpRequirement: 1060, previousStageXpRequirement: 90, skillNodeIds: ["desc_12_13"] },
     ],
   },
 
   harmonic_intervals: {
     id: "harmonic_intervals",
     title: "Harmonic Intervals",
-    levelRequirement: 1,
+    levelRequirement: 4,
     skillType: "intervals",
     stages: [
-      { xpRequirement: 0, skillNodeIds: ["harmonic_2nds", "harmonic_3rds"] },
-      { xpRequirement: 15, skillNodeIds: ["harmonic_4ths", "harmonic_5ths"] },
-      { xpRequirement: 30, skillNodeIds: ["harmonic_octave"] },
-      { xpRequirement: 45, skillNodeIds: ["harmonic_6ths", "harmonic_7ths"] },
-      { xpRequirement: 65, skillNodeIds: ["harmonic_9ths"] },
-      { xpRequirement: 80, skillNodeIds: ["harmonic_10_11"] },
-      { xpRequirement: 100, skillNodeIds: ["harmonic_12_13"] },
+      { globalXpRequirement: 420, previousStageXpRequirement: 0, skillNodeIds: ["harmonic_2nds", "harmonic_3rds", ...THEORY_STAGE_NODE_IDS.harmonic_intervals[0]] },
+      { globalXpRequirement: 560, previousStageXpRequirement: 80, skillNodeIds: ["harmonic_4ths", "harmonic_5ths", ...THEORY_STAGE_NODE_IDS.harmonic_intervals[1]] },
+      { globalXpRequirement: 700, previousStageXpRequirement: 70, skillNodeIds: ["harmonic_octave"] },
+      { globalXpRequirement: 860, previousStageXpRequirement: 90, skillNodeIds: ["harmonic_6ths", "harmonic_7ths"] },
+      { globalXpRequirement: 1030, previousStageXpRequirement: 80, skillNodeIds: ["harmonic_9ths"] },
+      { globalXpRequirement: 1220, previousStageXpRequirement: 80, skillNodeIds: ["harmonic_10_11"] },
+      { globalXpRequirement: 1430, previousStageXpRequirement: 90, skillNodeIds: ["harmonic_12_13"] },
     ],
   },
 
@@ -689,15 +703,15 @@ export const SKILL_MODES = {
     levelRequirement: 5,
     skillType: "chords",
     stages: [
-      { xpRequirement: 0, skillNodeIds: ["chord_triads", "chord_sus_power"] },
-      { xpRequirement: 25, skillNodeIds: ["chord_major_minor_7"] },
-      { xpRequirement: 45, skillNodeIds: ["chord_dom_dim_7"] },
-      { xpRequirement: 65, skillNodeIds: ["chord_9ths"] },
-      { xpRequirement: 85, skillNodeIds: ["chord_11_69"] },
-      { xpRequirement: 105, skillNodeIds: ["chord_13ths"] },
-      { xpRequirement: 130, skillNodeIds: ["chord_added"] },
-      { xpRequirement: 160, skillNodeIds: ["chord_altered_7"] },
-      { xpRequirement: 200, skillNodeIds: ["chord_altered_13"] },
+      { globalXpRequirement: 700, previousStageXpRequirement: 0, skillNodeIds: ["chord_triads", "chord_sus_power", ...THEORY_STAGE_NODE_IDS.chords[0]] },
+      { globalXpRequirement: 860, previousStageXpRequirement: 70, skillNodeIds: ["chord_major_minor_7", ...THEORY_STAGE_NODE_IDS.chords[1]] },
+      { globalXpRequirement: 1040, previousStageXpRequirement: 70, skillNodeIds: ["chord_dom_dim_7", ...THEORY_STAGE_NODE_IDS.chords[2]] },
+      { globalXpRequirement: 1240, previousStageXpRequirement: 90, skillNodeIds: ["chord_9ths"] },
+      { globalXpRequirement: 1460, previousStageXpRequirement: 90, skillNodeIds: ["chord_11_69"] },
+      { globalXpRequirement: 1700, previousStageXpRequirement: 100, skillNodeIds: ["chord_13ths"] },
+      { globalXpRequirement: 1960, previousStageXpRequirement: 100, skillNodeIds: ["chord_added"] },
+      { globalXpRequirement: 2240, previousStageXpRequirement: 120, skillNodeIds: ["chord_altered_7"] },
+      { globalXpRequirement: 2550, previousStageXpRequirement: 120, skillNodeIds: ["chord_altered_13"] },
     ],
   },
 
@@ -707,10 +721,10 @@ export const SKILL_MODES = {
     levelRequirement: 1,
     skillType: "notes",
     stages: [
-      { xpRequirement: 0, skillNodeIds: ["notes_white_1"] },
-      { xpRequirement: 10, skillNodeIds: ["notes_white_2"] },
-      { xpRequirement: 25, skillNodeIds: ["notes_black_1"] },
-      { xpRequirement: 40, skillNodeIds: ["notes_black_2"] },
+      { globalXpRequirement: 0, previousStageXpRequirement: 0, skillNodeIds: ["notes_white_1", ...THEORY_STAGE_NODE_IDS.notes[0]] },
+      { globalXpRequirement: 40, previousStageXpRequirement: 40, skillNodeIds: ["notes_white_2", ...THEORY_STAGE_NODE_IDS.notes[1]] },
+      { globalXpRequirement: 110, previousStageXpRequirement: 60, skillNodeIds: ["notes_black_1", ...THEORY_STAGE_NODE_IDS.notes[2]] },
+      { globalXpRequirement: 190, previousStageXpRequirement: 50, skillNodeIds: ["notes_black_2", ...THEORY_STAGE_NODE_IDS.notes[3]] },
     ],
   },
 
@@ -721,17 +735,23 @@ export type SkillModeId = keyof typeof SKILL_MODES
 export const SKILL_TYPES = {
     intervals: {
         id: "intervals",
-        title: "Intervals"
+        title: "Intervals",
+        subtitle: "Distance training",
+        levelRequirement: 2
     },
 
     notes: {
         id: "notes",
-        title: "Notes"
+        title: "Notes",
+        subtitle: "Pitch naming",
+        levelRequirement: 1
     },
 
     chords: {
         id: "chords",
-        title: "Chords"
+        title: "Chords",
+        subtitle: "Harmony recognition",
+        levelRequirement: 5
     }
 } as const satisfies Record<string, SkillType>
 
@@ -739,10 +759,13 @@ export type SkillTypeId = keyof typeof SKILL_TYPES
 
 export const LEVELS_FROM_XP: Record<number, number> = {
   1: 0,
-  2: 100,
-  3: 300,
-  4: 600,
-  5: 1000,
-  6: 1500
+  2: 80,
+  3: 220,
+  4: 420,
+  5: 700,
+  6: 1050,
+  7: 1450,
+  8: 1900,
+  9: 2400,
+  10: 2950
 }
-

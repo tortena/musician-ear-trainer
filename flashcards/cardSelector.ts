@@ -27,6 +27,28 @@ function chooseNewComponentIdsFromList(userProgress: UserProgress, arr: SkillCom
 
 }
 
+function appendFlashcards(
+    session: Flashcard[],
+    componentIds: SkillComponentId[],
+    newFlashcard: boolean
+) {
+    session.push(...componentIds.map((skillComponentId): Flashcard => ({
+        skillComponentId,
+        newFlashcard,
+    })))
+}
+
+function shuffleFlashcards(cards: Flashcard[]): Flashcard[] {
+    const copy = [...cards]
+
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[copy[i], copy[j]] = [copy[j], copy[i]]
+    }
+
+    return copy
+}
+
 export function selectCardsForSession(userProgress: UserProgress, sessionParams: SessionParams) : Flashcard[] {
     
     // Note that current function may not have a full session of cards, and no weighting is provided for new card selection
@@ -53,22 +75,19 @@ export function selectCardsForSession(userProgress: UserProgress, sessionParams:
     )
 
     const newUnlockedComponentIds = getUnlockedSkillComponentIds(userProgress).filter((p) => !learntIdSet.has(p))
+    const unlockedLearntComponentIds = getUnlockedSkillComponentIds(userProgress).filter((p) => learntIdSet.has(p))
     
     var cardSession : Flashcard[] = []
 
     // Selection algorithm:
     // 1. Take as many reviewcards as possible (within given bounds)
     if (dueComponentIds.length < maxReviews) {
-        cardSession.push(...(dueComponentIds.map((p): Flashcard => ({
-            skillComponentId: p, 
-            newFlashcard: false}))))
+        appendFlashcards(cardSession, dueComponentIds, false)
     } else {
-        cardSession.push(...chooseNewComponentIdsFromList(
+        appendFlashcards(cardSession, chooseNewComponentIdsFromList(
             userProgress,
             dueComponentIds,
-            maxReviews).map((p): Flashcard => ({
-                skillComponentId: p, 
-                newFlashcard: false})))
+            maxReviews), false)
     }
 
 
@@ -76,18 +95,25 @@ export function selectCardsForSession(userProgress: UserProgress, sessionParams:
     const possibleNewCards = Math.min(maxNewFlashcards,maxFlashcardNum - cardSession.length)
 
     if (newUnlockedComponentIds.length > possibleNewCards) {
-        cardSession.push(...chooseNewComponentIdsFromList(
+        appendFlashcards(cardSession, chooseNewComponentIdsFromList(
             userProgress,
             newUnlockedComponentIds,
-            possibleNewCards).map((p): Flashcard => ({
-                skillComponentId: p, 
-                newFlashcard: true})))
+            possibleNewCards), true)
     } else {
-        cardSession.push(...(newUnlockedComponentIds.map((p): Flashcard => ({
-            skillComponentId: p, 
-            newFlashcard: true}))))
+        appendFlashcards(cardSession, newUnlockedComponentIds, true)
     }
 
-    return cardSession
+    // 3. Fallback: if there are no due or new cards, keep the session going with unlocked learnt cards.
+    const remainingSlots = maxFlashcardNum - cardSession.length
+    if (remainingSlots > 0 && unlockedLearntComponentIds.length > 0) {
+        const fallbackIds =
+            unlockedLearntComponentIds.length > remainingSlots
+                ? chooseNewComponentIdsFromList(userProgress, unlockedLearntComponentIds, remainingSlots)
+                : unlockedLearntComponentIds
+
+        appendFlashcards(cardSession, fallbackIds, false)
+    }
+
+    return shuffleFlashcards(cardSession)
 
 }

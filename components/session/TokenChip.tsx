@@ -1,11 +1,13 @@
 import { Text, Pressable, StyleSheet } from "react-native"
 import Animated from "react-native-reanimated"
+import { useAppTheme } from "@/theme/ThemeProvider"
 
 type Props = {
   label: string
   onPress?: () => void
   selected?: boolean
   correct?: boolean
+  incorrect?: boolean
   disabled?: boolean
 }
 
@@ -14,8 +16,11 @@ export function TokenChip({
   onPress,
   selected,
   correct,
+  incorrect,
   disabled,
 }: Props) {
+  const { theme } = useAppTheme()
+
   return (
     <Animated.View>
       <Pressable
@@ -23,12 +28,16 @@ export function TokenChip({
         disabled={disabled}
         style={[
           styles.chip,
-          selected && styles.selected,
-          correct && styles.correct,
+          { backgroundColor: theme.card, borderColor: theme.cardBorder },
+          selected && { backgroundColor: theme.accent, borderColor: theme.accent },
+          correct && { backgroundColor: theme.success, borderColor: theme.success },
+          incorrect && { backgroundColor: theme.danger, borderColor: theme.danger },
           disabled && styles.disabled,
         ]}
       >
-        <Text style={styles.text}>{label}</Text>
+        <Text style={[styles.text, { color: selected || correct || incorrect ? theme.accentText : theme.text }]}>
+          {label}
+        </Text>
       </Pressable>
     </Animated.View>
   )
@@ -36,17 +45,11 @@ export function TokenChip({
 
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: "#1A1625",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
     margin: 6,
-  },
-  selected: {
-    backgroundColor: "#8B5CF6",
-  },
-  correct: {
-    backgroundColor: "#22C55E",
+    borderWidth: 1,
   },
   disabled: {
     opacity: 0.4,

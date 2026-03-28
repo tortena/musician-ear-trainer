@@ -12,6 +12,6 @@ export type UserProgress = {
   engagement: {
     currentStreak: number;
     longestStreak: number;
-    lastActiveDate: string;
+    lastActiveDate: string | null;
   };
 };

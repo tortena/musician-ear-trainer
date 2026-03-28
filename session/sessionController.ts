@@ -180,10 +180,14 @@ export class SessionController {
                     )
                     
                     // Update Progress
-                    userProgress.progression.xp += gainedXp
-                    componentProgress.componentXp += gainedXp
+                    const adjustedXp = this.sessionState.practiceMode
+                        ? Math.max(2, Math.floor(gainedXp / 3))
+                        : gainedXp
 
-                    totalXpGained += gainedXp
+                    userProgress.progression.xp += adjustedXp
+                    componentProgress.componentXp += adjustedXp
+
+                    totalXpGained += adjustedXp
 
                 } else {
                     throw new Error("Cannot find ComponentProgress for: " + flashcard.skillComponentId)
@@ -191,10 +195,10 @@ export class SessionController {
             }
         )
 
-        const alreadyCompletedToday = isSameDay(
-            new Date(userProgress.engagement.lastActiveDate),
-            new Date()
-        )
+        const lastActiveDate = userProgress.engagement.lastActiveDate
+        const alreadyCompletedToday = lastActiveDate
+            ? isSameDay(new Date(lastActiveDate), new Date())
+            : false
 
         if (!alreadyCompletedToday) {
             userProgress.engagement.currentStreak += 1

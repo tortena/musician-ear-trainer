@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export enum StorageKey {
-    USER_PROGRESS = "user_progress"
+    USER_PROGRESS = "user_progress_v2",
+    APP_THEME = "app_theme",
 }
 
 export async function saveData<T>(key: StorageKey, data: T): Promise<void> {

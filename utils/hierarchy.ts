@@ -10,7 +10,7 @@ export function getNodeFromComponent(skillComponentId: SkillComponentId): SkillN
 }
 
 export function getModeFromNode(skillNodeId: SkillNodeId): SkillModeId {
-    return SKILL_NODES[skillNodeId].skillMode
+    return SKILL_NODES[skillNodeId].skillMode as SkillModeId
 }
 
 export function getModeFromComponent(skillComponentId: SkillComponentId): SkillModeId {

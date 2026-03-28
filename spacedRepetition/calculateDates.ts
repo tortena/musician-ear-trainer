@@ -1,10 +1,10 @@
-import { SM2Values } from "@/domain/answer/SM2Response";
+import { FSRSState } from "@/domain/progression/FSRSState";
 
-export function calculateDueDate(sm2Values:SM2Values) {
+export function calculateDueDate(fsrsValues: FSRSState) {
     const now: Date = new Date()
 
     const dueDate = new Date(now)
-    dueDate.setDate(dueDate.getDate() + sm2Values.interval)
+    dueDate.setDate(dueDate.getDate() + fsrsValues.scheduledDays)
 
     return dueDate.toISOString().slice(0,10)
 }

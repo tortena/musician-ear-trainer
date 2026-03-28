@@ -1,7 +1,9 @@
 
 import { SkillComponentId } from '@/constants'
+import { Asset } from 'expo-asset'
 import { getSkillTypeFromComponent } from '@/utils/hierarchy'
-import { Audio } from 'expo-av'
+import { Audio, AVPlaybackSource } from 'expo-av'
+import { Platform } from 'react-native'
 import { match } from "ts-pattern"
 import { audioMap } from './audioMap'
 
@@ -10,6 +12,7 @@ let isPlaying = false
 let playbackTimeout: ReturnType<typeof setTimeout> | null = null
 
 const placeholderAudio = require('@/assets/audio/placeholder.mp3')
+type AudioModule = number | string | { uri?: string; type?: string }
 
 
 /**
@@ -26,6 +29,7 @@ function resetPlayingState() {
 }
 
 const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]
+const INTERVAL_VARIANTS = ["down", "harmonic", "up"] as const
 
 export async function playSkillComponentAudio(skillComponentId: SkillComponentId, randomise: boolean) {
   if (!skillComponentId) {
@@ -35,43 +39,117 @@ export async function playSkillComponentAudio(skillComponentId: SkillComponentId
 
   try {
     const skillTypeId = getSkillTypeFromComponent(skillComponentId)
-    const notePreference = randomise ? NOTES[Math.floor(Math.random()*NOTES.length)] : NOTES[0]
-
-    match(skillTypeId)
+    const candidateKeys = match(skillTypeId)
       .with("notes", () => {
         const note = skillComponentId.slice(5)
-        playAudio(note + note)
+        return [note + note]
       })
-      .with("chords", () => playAudio(skillComponentId + notePreference))
-      .with("intervals", () => {
-        const key = selectIntervalVariant(skillComponentId, notePreference)
-        playAudio(key)
-      })
+      .with("chords", () => buildChordCandidateKeys(skillComponentId, randomise))
+      .with("intervals", () => buildIntervalCandidateKeys(skillComponentId, randomise))
       .exhaustive()
+
+    await playAudio(candidateKeys, skillComponentId)
   } catch (error) {
     console.error(`Failed to play audio for skillComponentId "${skillComponentId}":`, error)
   }
 }
 
-/**
- * Select a random interval variant (down, harmonic, up) and return the key
- */
-function selectIntervalVariant(skillComponentId: string, notePreference: string): string {
-  // Extract the base name (e.g., "Aug13" from "Aug13_down")
-  const baseName = skillComponentId.split('_')[0]
-  const variants = ["down", "harmonic", "up"]
-  const randomVariant = variants[Math.floor(Math.random() * variants.length)]
-  return `${baseName}_${randomVariant}${notePreference}`
+function shuffle<T>(items: readonly T[]): T[] {
+  const copy = [...items]
+
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+
+  return copy
 }
 
-/**
- * Play an audio file given a flashcard key
- */
-async function playAudio(key: string) {
+function buildChordCandidateKeys(skillComponentId: string, randomise: boolean): string[] {
+  const noteOrder = randomise ? shuffle(NOTES) : [...NOTES]
+  return noteOrder.map((note) => `${skillComponentId}${note}`)
+}
+
+function buildIntervalCandidateKeys(skillComponentId: string, randomise: boolean): string[] {
+  const baseName = skillComponentId.split('_')[0]
+  const noteOrder = randomise ? shuffle(NOTES) : [...NOTES]
+  const requestedVariant = skillComponentId.split("_")[1] as (typeof INTERVAL_VARIANTS)[number] | undefined
+  const variantOrder = [
+    ...(requestedVariant ? [requestedVariant] : []),
+    ...shuffle(INTERVAL_VARIANTS.filter((variant) => variant !== requestedVariant)),
+  ]
+
+  return variantOrder.flatMap((variant) =>
+    noteOrder.map((note) => `${baseName}_${variant}${note}`)
+  )
+}
+
+function resolveAudioAssets(candidateKeys: string[]) {
+  const resolvedAssets: { asset: AudioModule; resolvedKey: string }[] = []
+
+  for (const key of candidateKeys) {
+    const asset = audioMap[key] as AudioModule | undefined
+    if (asset !== null && asset !== undefined) {
+      resolvedAssets.push({ asset, resolvedKey: key })
+    }
+  }
+
+  return resolvedAssets
+}
+
+function appendMissingExtension(uri: string, extension: string): string {
+  const [path, query = ""] = uri.split("?")
+  if (/\.[a-z0-9]+$/i.test(path)) {
+    return uri
+  }
+
+  const suffix = query ? `?${query}` : ""
+  return `${path}.${extension}${suffix}`
+}
+
+function normaliseWebAssetUri(uri: string, type?: string): string {
+  const extension = typeof type === "string" && type.length > 0 ? type : "mp3"
+  const withExtension = appendMissingExtension(uri, extension)
+  const [path, query = ""] = uri.split("?")
+  const encodedPath = path.replaceAll("#", "%23")
+  return query ? `${encodedPath}?${query}` : encodedPath
+}
+
+function getPlaybackSource(asset: AudioModule): AVPlaybackSource {
+  if (typeof asset === "string") {
+    return { uri: normaliseWebAssetUri(asset) }
+  }
+
+  if (typeof asset === "number") {
+    if (Platform.OS !== "web") {
+      return asset
+    }
+
+    const moduleAsset = Asset.fromModule(asset)
+    const sourceUri = moduleAsset.localUri ?? moduleAsset.uri
+    if (typeof sourceUri !== "string") {
+      return asset
+    }
+
+    return { uri: normaliseWebAssetUri(sourceUri, moduleAsset.type) }
+  }
+
+  if (typeof asset !== "object" || asset === null || typeof asset.uri !== "string") {
+    return placeholderAudio
+  }
+
+  if (Platform.OS !== "web") {
+    return { uri: asset.uri }
+  }
+
+  return { uri: normaliseWebAssetUri(asset.uri, asset.type) }
+}
+
+async function playAudio(candidateKeys: string[], skillComponentId: SkillComponentId) {
   if (isPlaying) return
   isPlaying = true
-
-  console.log(`playAudio called with key: "${key}"`)
+  let resolvedKey: string | null = null
+  const candidatePreview = candidateKeys.slice(0, 5)
 
   // Timeout fallback: reset flag after 10 seconds max
   playbackTimeout = setTimeout(() => {
@@ -85,28 +163,43 @@ async function playAudio(key: string) {
       soundObject = null
     }
 
-    let asset = audioMap[key]
+    const resolvedAssets = resolveAudioAssets(candidateKeys)
 
-    if (!asset) {
-      console.warn(`Audio not found for key "${key}", using placeholder`)
-      asset = placeholderAudio
+    if (resolvedAssets.length === 0) {
+      console.warn(
+        `[audio] placeholder fallback for "${skillComponentId}". Tried ${candidateKeys.length} candidate keys:`,
+        candidatePreview
+      )
+      const { sound } = await Audio.Sound.createAsync(placeholderAudio, { shouldPlay: true })
+      soundObject = sound
     } else {
-      // Validate that the asset is actually a valid require result
-      if (typeof asset !== 'number' && !asset) {
-        console.warn(`Audio asset for key "${key}" is invalid (null/undefined), using placeholder`)
-        asset = placeholderAudio
+      let playbackError: unknown = null
+
+      for (const candidate of resolvedAssets) {
+        try {
+          resolvedKey = candidate.resolvedKey
+          console.info(`[audio] playing "${skillComponentId}" via asset key "${resolvedKey}"`)
+
+          const { sound } = await Audio.Sound.createAsync(
+            getPlaybackSource(candidate.asset),
+            { shouldPlay: true }
+          )
+
+          soundObject = sound
+          playbackError = null
+          break
+        } catch (error) {
+          playbackError = error
+          console.warn(`[audio] failed asset key "${candidate.resolvedKey}" for "${skillComponentId}"`, error)
+        }
+      }
+
+      if (!soundObject) {
+        throw playbackError ?? new Error(`No playable audio asset found for "${skillComponentId}"`)
       }
     }
 
-    const { sound } = await Audio.Sound.createAsync(
-      asset,
-      { shouldPlay: true }
-    )
-
-    soundObject = sound
-
-    // Unlock when playback finishes
-    sound.setOnPlaybackStatusUpdate(status => {
+    soundObject?.setOnPlaybackStatusUpdate(status => {
       if (!status.isLoaded) return
       if (status.didJustFinish) {
         resetPlayingState()
@@ -114,7 +207,10 @@ async function playAudio(key: string) {
     })
 
   } catch (error) {
-    console.error(`Audio playback error for key "${key}":`, error)
+    console.error(
+      `Audio playback error for skill component "${skillComponentId}"${resolvedKey ? ` (resolved key "${resolvedKey}")` : ""}:`,
+      error
+    )
 
     // 🔒 Absolute last-resort fallback
     try {
@@ -140,10 +236,10 @@ async function playAudio(key: string) {
 }
 
 export async function stopAudio() {
+  const activeSound = soundObject
   resetPlayingState()
-  if (soundObject) {
-    await soundObject.stopAsync()
-    await soundObject.unloadAsync()
-    soundObject = null
+  if (activeSound) {
+    await activeSound.stopAsync()
+    await activeSound.unloadAsync()
   }
 }

@@ -1,9 +1,9 @@
 import { SkillComponentId } from "@/constants"
-import { SM2Values } from "../answer/SM2Response"
+import { FSRSState } from "./FSRSState"
 
 export type ComponentProgress = {
     skillComponentId: SkillComponentId
-    sm2Values: SM2Values
+    fsrsValues: FSRSState
     dueDate: string
     lastReviewed: string
     componentXp: number

@@ -6,6 +6,7 @@ export type SessionState = {
    
     queue: Flashcard[]
     currentIndex: number
+    practiceMode?: boolean
 
     completedFlashcards: Array<boolean>
 
